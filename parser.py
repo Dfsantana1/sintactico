@@ -7,7 +7,7 @@ Implementa un analizador sintáctico usando SLY (Sly Lex Yacc)
 import sys
 from sly import Lexer, Parser
 from model import *
-from errors import error
+from errors import error, errors_detected
 
 # =====================================================================
 # LEXER
@@ -152,7 +152,7 @@ class BMinorLexer(Lexer):
     
     def error(self, t):
         error(f"Carácter ilegal '{t.value[0]}'", t.lineno)
-        self.skip(1)
+        self.index += 1
 
 # =====================================================================
 # PARSER
@@ -226,7 +226,7 @@ class BMinorParser(Parser):
     def array_decl(self, p):
         return ArrayDecl(p.ID, p.array_type[0], p.array_type[1], p.expr_list)
     
-    @_('ID COLON FUNCTION type LPAREN param_list RPAREN ARROW LBRACE stmt_list RBRACE')
+    @_('ID COLON FUNCTION type LPAREN param_list RPAREN ASSIGN LBRACE stmt_list RBRACE')
     def func_decl(self, p):
         return FuncDecl(p.ID, p.type, p.param_list, p.stmt_list)
     
@@ -513,7 +513,9 @@ if __name__ == "__main__":
     if ast and not errors_detected():
         print("Parsing exitoso!")
         print("\nAST generado:")
-        print(ast.pretty())
+        from rich.console import Console
+        console = Console()
+        console.print(ast.pretty())
     else:
         print("Errores encontrados durante el parsing.")
         sys.exit(1)
